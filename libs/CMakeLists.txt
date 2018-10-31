@@ -8,27 +8,12 @@ project(babel_libs)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_library(babelOpus SHARED babelOpus/babelOpus.cpp babelOpus/babelOpus.hpp)
-
-add_library(audioPort SHARED
-        portAudio/AudioPort.cpp portAudio/AudioPort.hpp babelOpus/babelOpus.cpp babelOpus/babelOpus.hpp)
-
-add_library(networkQt SHARED
-        networkQt/QtProtocole.cpp networkQt/QtProtocole.hpp ../includes/SipHeader.cpp ../includes/SipHeader.hpp ../includes/NetworkException.hpp networkQt/MySocket.hpp)
-
-add_library(networkBoost SHARED
-        NetworkBoost/NetworkBoost.cpp NetworkBoost/NetworkBoost.hpp NetworkBoost/TcpConnection.cpp NetworkBoost/TcpConnection.hpp ../includes/SipHeader.cpp ../includes/SipHeader.hpp ../includes/ThreadContainer.hpp ../includes/NetworkException.hpp ../includes/BabelHeader.hpp)
+add_library(ECS SHARED ECS/Entity.cpp ECS/Entity.hpp)
 
 
-link_directories(${CMAKE_SOURCE_DIR}/libconan
-        ${CMAKE_SOURCE_DIR}/../build/lib)
+link_directories(${CMAKE_SOURCE_DIR}/../build/lib)
 
-target_link_libraries(networkBoost PRIVATE boost_system boost_thread)
-
-
-target_link_libraries(audioPort PRIVATE portaudio rt m asound pthread jack babelOpus networkQt)
-target_link_libraries(babelOpus PRIVATE opus)
-
+target_link_libraries(ECS PRIVATE boost_system boost_thread)
 
 include_directories(${PROJECT_SOURCE_DIR}/networkBoost
         ${PROJECT_SOURCE_DIR}/includeconan

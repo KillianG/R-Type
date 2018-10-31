@@ -1,8 +1,6 @@
 ##          							PERSONNAL GITIGNORE
 build/
 CMakeFiles/
-libs/libconan/
-libs/includeconan/
 
 ##parce qu'on est des fdp
 

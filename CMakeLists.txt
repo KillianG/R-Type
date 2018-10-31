@@ -21,9 +21,11 @@ link_directories(${CMAKE_SOURCE_DIR}/build/lib)
 
 add_subdirectory(libs)
 
-add_executable(RTypeClient)
+add_executable(RTypeClient
+		Client/main.cpp)
 
-add_executable(RTypeServer)
+add_executable(RTypeServer
+		Serveur/main.cpp)
 
 target_include_directories(RTypeClient PRIVATE
 		${PROJECT_SOURCE_DIR}/includes
