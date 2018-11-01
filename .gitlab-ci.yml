@@ -14,9 +14,4 @@ compilation:
     - cd build
     - cmake ..
     - make
-
-test:
-  stage: test
-  script:
-    - cd build
     - ctest
