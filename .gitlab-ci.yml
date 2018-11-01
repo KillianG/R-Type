@@ -6,8 +6,6 @@ stages:
 
 compilation:
   stage: compilation
-  tages:
-    - shell
   script:
     - apt-get update
     - apt-get install -y git cmake g++ gcovr
@@ -19,8 +17,6 @@ compilation:
 
 test:
   stage: test
-  tages:
-    - shell
   script:
     - cd build
     - ctest
