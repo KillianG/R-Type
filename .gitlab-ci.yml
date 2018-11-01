@@ -9,3 +9,8 @@ compilation:
     - cd build
     - cmake ..
     - make
+
+test:
+  script:
+    - cd build
+    - ctest
