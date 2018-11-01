@@ -1,6 +1,6 @@
-image: ubuntu:14.04
+image: debian:stretch
 
-job:
+compilation:
   script:
     - apt-get update
     - apt-get install -y git cmake g++ gcovr
@@ -8,6 +8,4 @@ job:
     - mkdir build
     - cd build
     - cmake ..
-    - make -j
-    - ./unit_tests
-    - gcovr -r ../src/
+    - make

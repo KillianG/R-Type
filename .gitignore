@@ -1,6 +1,7 @@
 ##          							PERSONNAL GITIGNORE
 build/
 CMakeFiles/
+CMakeCache.txt
 
 ##parce qu'on est des fdp
 
