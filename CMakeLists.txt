@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.7)
 
 if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE )
 		message(FATAL_ERROR "You can't build in the root directory.")
@@ -6,7 +6,9 @@ endif()
 
 project(R-Type)
 
-set(CMAKE_CXX_STANDARD 17)
+ENABLE_TESTING()
+
+set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -21,11 +23,26 @@ link_directories(${CMAKE_SOURCE_DIR}/build/lib)
 
 add_subdirectory(libs)
 
-add_executable(RTypeClient
-		Client/main.cpp)
+# General SRCS
+set(CLIENT_SRCS Client/base.cpp)
+set(SERVER_SRCS Serveur/base.cpp)
 
-add_executable(RTypeServer
-		Serveur/main.cpp)
+#Final executable
+add_executable(RTypeClient Client/main.cpp ${CLIENT_SRCS})
+add_executable(RTypeServer Serveur/main.cpp ${SERVER_SRCS})
+
+add_executable(ClientTest Client/test/test.cpp ${CLIENT_SRCS})
+add_test(NAME ClientTest COMMAND ClientTest)
+add_executable(ServerTest Serveur/test/test.cpp ${SERVER_SRCS})
+add_test(NAME ServerTest COMMAND ServerTest)
+
+target_include_directories(ClientTest PRIVATE
+		${PROJECT_SOURCE_DIR}/includes
+		${PROJECT_SOURCE_DIR}/Server/includes)
+
+target_include_directories(ServerTest PRIVATE
+		${PROJECT_SOURCE_DIR}/includes
+		${PROJECT_SOURCE_DIR}/Server/includes)
 
 target_include_directories(RTypeClient PRIVATE
 		${PROJECT_SOURCE_DIR}/includes
