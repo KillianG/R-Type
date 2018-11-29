@@ -11,7 +11,11 @@ make
 # How to code
 First create your branch, or use existing one except master and preprod, because they are protected.<br>
 
-When your code works in your branch and passes all unit tests you created (min: 75% coverage), you can create a merge request to preprod branch. As assignee put @Kyashar or @KillianG. Then we will look at your code and if everything is ok, set merge request as ok and merge.
+When your code works in your branch and passes all unit tests you created (min: 75% coverage), you can create a merge request to preprod branch. As assignee put @Kyashar or @KillianG. Then we will look at your code and if everything is ok, set merge request as ok and merge.<br>
+If something doesn't work in an other branch than yours, DON'T modify it by yourself, open an issue and the creator of the code will fix it.
+
+You need to complete the UML after each accepted merge request.
+You won't be able to open a new one if it's not done.
 # Conception
 UML incomming
 
@@ -21,3 +25,19 @@ Usefull links to help you understanding the project.
  - What is R-TYPE: https://en.wikipedia.org/wiki/R-Type
  - What is ECS: https://bit.ly/2pbmtQo
  - What is SFML: https://www.sfml-dev.org/index-fr.php
+ 
+
+# Onefetch
+```
+                                         Project: cpp_rtype
+                                         Language: C++
+                                         Authors: killian
+      `/+ooooo:                                   Bernard erwan
+     .oss:.`.-`    +s-      .ss                   Killian Gardahaut
+     /ss+       /++os+++-.+++ss+++       Repo: git@gitlab.com:Kyashar/cpp_rtype.git
+     :sso`      .--os/--``--:ss---       Number of lines: 24425
+     `/sso///+-    /+.      `++          License: MIT License
+       .:////:`
+       
+       
+```

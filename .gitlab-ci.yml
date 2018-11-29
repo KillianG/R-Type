@@ -1,17 +1,18 @@
-image: debian:stretch
+image: registry.gitlab.com/kyashar/cpp_rtype
 
 stages:
     - compilation
-    - test
 
 compilation:
   stage: compilation
   script:
-    - apt-get update
-    - apt-get install -y git cmake g++ gcovr
-    - git submodule update --init --recursive
+          #    - git submodule update --init --recursive
+    - export DISPLAY=:0.0
     - mkdir build
     - cd build
     - cmake ..
-    - make
+    - make -j 3
+    - ./bin/ServerTest
     - ctest
+  after_script:
+    - cat ./build/log.txt

@@ -7065,7 +7065,7 @@ namespace Catch {
         auto const loadTestNamesFromFile = [&]( std::string const& filename ) {
                 std::ifstream f( filename.c_str() );
                 if( !f.is_open() )
-                    return ParserResult::runtimeError( "Unable to load input file: '" + filename + "'" );
+                    return ParserResult::runtimeError( "Unable to loadFromFile input file: '" + filename + "'" );
 
                 std::string line;
                 while( std::getline( f, line ) ) {
@@ -7189,7 +7189,7 @@ namespace Catch {
                 ( "show test durations" )
             | Opt( loadTestNamesFromFile, "filename" )
                 ["-f"]["--input-file"]
-                ( "load test names to run from a file" )
+                ( "loadFromFile test names to run from a file" )
             | Opt( config.filenamesAsTags )
                 ["-#"]["--filenames-as-tags"]
                 ( "adds a tag for the filename" )

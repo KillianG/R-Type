@@ -2,6 +2,9 @@
 build/
 CMakeFiles/
 CMakeCache.txt
+Client/main.cpp
+
+log.txt
 
 ##parce qu'on est des fdp
 
@@ -105,3 +108,6 @@ fabric.properties
 .idea/httpRequests
 
 .idea/
+log.txt
+tmp
+vgcor.*
