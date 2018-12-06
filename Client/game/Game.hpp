@@ -30,9 +30,17 @@ class GameBase : public Receiver<GameBase> {
         int y;
     };
 
-public:
+    struct hitMarker {
+        float posX;
+        float posY;
+        int sizeX;
+        int sizeY;
+    };
 
+public:
     using clock = std::chrono::steady_clock;
+
+    bool isLost { false };
 
     GameBase(std::string ip, int port, EventManager &mgr, int portUDP, int portTCP);
     ~GameBase() = default;
@@ -46,6 +54,24 @@ public:
 
 private:
 
+    sf::SoundBuffer buffer;
+    sf::Sound sound;
+
+    sf::SoundBuffer bufferLASER;
+    sf::Sound soundLASER;
+
+    sf::SoundBuffer bufferMEGALASER;
+    sf::Sound soundMEGALASER;
+
+    sf::SoundBuffer boomBuffer;
+    sf::Sound soundBoom;
+
+    bool isCharging;
+
+    bool canShoot { true };
+
+    void checkLoad(gfx::Manager &gfx);
+
     bool checkConnection();
     void checkDeads(gfx::Manager &mgr);
     void checkEntities(gfx::Manager &mgr);
@@ -53,6 +79,7 @@ private:
 
     void checkButtons();
 
+    std::string gameName;
 
     void doThisEveryMs(int ms, std::function<void()> f);
     void run();

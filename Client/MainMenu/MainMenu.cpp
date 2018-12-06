@@ -1,4 +1,6 @@
 #include <utility>
+#include <chrono>
+//#include <filesystem>
 
 //
 // Created by prat on 12/11/18.
@@ -14,6 +16,8 @@
 #include "../../libs/Exception/Exception.hpp"
 #include "../../libs/GFX/Sprite.hpp"
 
+//#include <experimental/filesystem>
+
 /**
  * MainMenu Constructor
  * Subscribe to event manager
@@ -26,6 +30,49 @@ MainMenu::MainMenu() : quit(false), drawIp(false),drawJoinPwd(false), drawServer
     this->drawIp = false;
     this->createGame = false;
     this->joinPwdGame = false;
+    _upInputReleased = false;
+    _downInputReleased = false;
+    _leftInputReleased = false;
+    _rightInputReleased = false;
+    _shootInputReleased = false;
+    volume = 50;
+}
+
+void MainMenu::doThisEveryMs(int ms, std::function<void()> f) {
+    static std::chrono::milliseconds lag(0);
+    std::chrono::milliseconds timeStep(ms);
+    static clock::time_point start(clock::now());
+
+    auto deltaTime = clock::now() - start;
+    start = clock::now();
+    lag += std::chrono::duration_cast<std::chrono::milliseconds>(deltaTime);
+
+    if (lag > timeStep) {
+        lag -= timeStep;
+        f();
+    }
+}
+
+void MainMenu::playCinematic() {
+    gfx::KeyboardManager kbman;
+
+    while (!kbman.isKeyPressed("Escape") && !kbman.isKeyPressed("Space") && !this->stopCinem){
+        this->doThisEveryMs(41, [this](){
+            static int count = 100;
+            std::stringstream name;
+            name.fill('0');
+
+            name << "img" << std::setw(4) << count;
+            if (count < 180) {
+                this->manager.getWindow()->removeSprite("cinematic");
+                this->manager.getWindow()->addSprite(name.str(), "cinematic");
+                count++;
+            } else {
+                this->stopCinem = true;
+            }
+        });
+        this->manager.run();
+    }
 }
 
 /**
@@ -36,6 +83,12 @@ void MainMenu::launch() {
     gfx::KeyboardManager kbMan;
 
     this->manager.new_window("R-Type", {1280, 720}, this->_evtMgr);
+
+    this->playCinematic();
+    this->manager.getSoundManager().addMusic("ftl", "InterstellarMenu");
+    this->manager.getSoundManager().playMusic("ftl");
+    this->manager.getSoundManager().setVolume(this->volume);
+
     setSprites();
     setButtons();
 
@@ -46,11 +99,16 @@ void MainMenu::launch() {
             this->createGame = false;
             this->_evtMgr.unsubscribeAll(*this);
             try {
-                this->game = std::make_shared<GameBase>(GameBase(this->ipToConnect, 50000, this->_evtMgr, 5455, 5456));
+                this->game = std::make_shared<GameBase>(GameBase(this->ipToConnect, 50003, this->_evtMgr, 5455, 5456));
                 this->game->createGame(this->gameNameInput, this->pwdInput);
-            } catch (...) {
+            } catch (std::exception &e) {
+                this->manager.getWindow()->closeWindow();
                 MainMenu menu;
                 menu.launch();
+                std::_Exit(0);
+            } catch (...) {
+                Logger::log(Logger::LogType::info, "Error unknown");
+                std::_Exit(0);
             }
             std::_Exit(0);
         }
@@ -58,32 +116,62 @@ void MainMenu::launch() {
             this->joinPwdGame = false;
             this->_evtMgr.unsubscribeAll(*this);
             try {
-                GameBase game = GameBase(this->ipToConnect, 50000, this->_evtMgr, 5402, 5401);
-                game.joinGame(this->selectedGame, gfx::InputEvent::clear());
-            } catch (...) {
+                GameBase game = GameBase(this->ipToConnect, 50003, this->_evtMgr, 5402, 5401);
+                game.joinGame(this->selectedGame, this->passwd);
+            } catch (std::exception &e) {
+                this->manager.getWindow()->closeWindow();
                 MainMenu menu;
                 menu.launch();
+                std::_Exit(0);
+            } catch (...) {
+                Logger::log(Logger::LogType::info, "Error unknown");
+                std::_Exit(0);
             }
             std::_Exit(0);
         }
     }
 }
 
+static void launchServer() {
+     auto servPath = fs::current_path();
+     servPath += "/build/bin/RTypeServer";
+     system(servPath.c_str());
+}
 
 /**
  * Function used when SinglePlayer Button is released
  */
 void MainMenu::onReleaseSinglePlayerButton() {
-    this->getButtonByName("singlePlayer")->setOnReLease([this](){
+    this->getButtonByName("singlePlayer")->setOnReLease([this]() {
+        std::string localGame("THESECRETNAMEOFTHELOCALGAMEYOUMISTNOTCREATETHESAME");
         Logger::log(Logger::LogType::info, "SINGLEPLAYER RELEASED");
         this->_evtMgr.unsubscribeAll(*this);
         try {
-            GameBase game("127.0.0.1", 50000, this->_evtMgr, 42421, 42422);
-            game.createGame("THESECRETNAMEOFTHELOCALGAMEYOUMISTNOTCREATETHESAME", "34567UIJNBVDEZ45678OKJHGFDE5678IOLKJHGFDERTYUIKJHVDSE45678IKJHGCFDXSZSD");
-        } catch (...) {
+            std::thread serv(&launchServer);
+            sleep(1);
+            GameBase game("127.0.0.1", 50003, this->_evtMgr, 42421, 42422);
+            auto gameList = game.getGameList();
+            std::cout << "Game list" << std::endl;
+            for (auto &&elem : gameList)
+                std::cout << elem << std::endl;
+            auto finded = std::find(gameList.begin(), gameList.end(), localGame);
+            if (finded != gameList.end())
+                game.joinGame(localGame, "34567UIJNBVDEZ45678OKJHGFDE5678IOLKJHGFDERTYUIKJHVDSE45678IKJHGCFDXSZSD");
+            else
+                game.createGame(localGame, "34567UIJNBVDEZ45678OKJHGFDE5678IOLKJHGFDERTYUIKJHVDSE45678IKJHGCFDXSZSD");
+        } catch (rtype::Exception &e) {
+            Logger::log(Logger::LogType::error, e.what());
             this->manager.getWindow()->closeWindow();
             MainMenu menu;
             menu.launch();
+            std::_Exit(0);
+        } catch (std::exception &e) {
+            this->manager.getWindow()->closeWindow();
+            MainMenu menu;
+            menu.launch();
+            std::_Exit(0);
+        } catch (...) {
+            Logger::log(Logger::LogType::info, "Error unknown");
             std::_Exit(0);
         }
     });
@@ -104,8 +192,8 @@ void MainMenu::onReleaseMultiPlayerButton() {
 void MainMenu::onReleaseOptionsButton() {
     this->getButtonByName("options")->setOnReLease([this](){
 
-    	showOptionsMenu(true);
-	    Logger::log(Logger::LogType::info, "OPTIONS RELEASED");
+        showOptionsMenu(true);
+        Logger::log(Logger::LogType::info, "OPTIONS RELEASED");
     });
 }
 
@@ -134,14 +222,15 @@ void MainMenu::onReleaseQuitButton() {
 void MainMenu::setSprites() {
     this->splash.init(this->manager.getWindow(), "minecraft");
     auto window = this->manager.getWindow();
+    auto textManager = this->manager.getWindow()->getTextManager();
 
-    window->getTextManager()->loadFont("hydrogen", "hydrogen whiskey");
-    window->getTextManager()->loadFont("manaspc", "manaspc");
+    textManager->loadFont("hydrogen", "hydrogen whiskey");
+    textManager->loadFont("manaspc", "manaspc");
 
     window->addSprite("background", "background");
     window->addSprite("foggy", "fog");
     window->addSprite("planet", "planet");
-    window->addSprite("logo_header", "header");
+    window->addSprite("logo", "logo");
     window->addSprite("panel", "panel");
 
 
@@ -152,36 +241,37 @@ void MainMenu::setSprites() {
     window->getSpriteByName("fog")->clip({0, 0}, {99999, 99999});
     window->getSpriteByName("panel")->setPosition({455, 150});
     window->getSpriteByName("panel")->setToDraw(false);
+    window->getSpriteByName("logo")->setPosition({250, 70});
 
-    window->getTextManager()->addText("hydrogen", 110, "R  -  T  Y  P  E", "title");
-    window->getTextManager()->addText("manaspc", 27, "GAME LIST", "gameList");
-    window->getTextManager()->setCenter("title", {window->getTextManager()->getSize("title").x / 2, window->getTextManager()->getSize("title").y / 2});
-    window->getTextManager()->setPosition("title", {static_cast<float>(window->getSize().x / 2), 98});
-    window->getTextManager()->setColor("gameList", 255, 255, 255, 0);
-    window->getTextManager()->setPosition("gameList", {555, 160});
-    window->getTextManager()->addText("manaspc", 25, "", "serverip");
-    window->getTextManager()->addText("manaspc", 25, "", "serverName");
-    window->getTextManager()->addText("manaspc", 25, "", "pwd");
-    window->getTextManager()->addText("manaspc", 25, "", "joinPwd");
-    window->getTextManager()->addText("manaspc", 25, "", "upKeyInput");
-    window->getTextManager()->addText("manaspc", 25, "", "downKeyInput");
-    window->getTextManager()->addText("manaspc", 25, "", "leftKeyInput");
-    window->getTextManager()->addText("manaspc", 25, "", "rightKeyInput");
-    window->getTextManager()->addText("manaspc", 25, "", "shootKeyInput");
-
-
-	window->getTextManager()->setPosition("serverip", {420, 320});
-    window->getTextManager()->setPosition("serverName", {420, 220});
-    window->getTextManager()->setPosition("pwd", {420, 320});
-    window->getTextManager()->setPosition("joinPwd", {420, 320});
-    window->getTextManager()->setPosition("upKeyInput", {360, 190});
-	window->getTextManager()->setPosition("downKeyInput", {350, 20});
-	window->getTextManager()->setPosition("leftKeyInput", {350, 330});
-	window->getTextManager()->setPosition("rightKeyInput", {350, 480});
-	window->getTextManager()->setPosition("shootKeyInput", {350, 625});
+    textManager->addText("manaspc", 27, "GAME LIST", "gameList");
+    textManager->addText("manaspc", 27, "Password", "enterPwd");
+    textManager->setColor("gameList", 255, 255, 255, 0);
+    textManager->setColor("enterPwd", 255, 255, 255, 0);
+    textManager->setPosition("gameList", {555, 160});
+    textManager->setPosition("enterPwd", {565, 260});
+    textManager->addText("manaspc", 25, "", "serverip");
+    textManager->addText("manaspc", 25, "", "serverName");
+    textManager->addText("manaspc", 25, "", "pwd");
+    textManager->addText("manaspc", 25, "", "joinPwd");
+    textManager->addText("manaspc", 25, "", "upKeyInput");
+    textManager->addText("manaspc", 25, "", "downKeyInput");
+    textManager->addText("manaspc", 25, "", "leftKeyInput");
+    textManager->addText("manaspc", 25, "", "rightKeyInput");
+    textManager->addText("manaspc", 25, "", "shootKeyInput");
 
 
-	this->splash.display();
+    textManager->setPosition("serverip", {420, 320});
+    textManager->setPosition("serverName", {420, 220});
+    textManager->setPosition("pwd", {420, 320});
+    textManager->setPosition("joinPwd", {420, 320});
+    textManager->setPosition("upKeyInput", {360, 190});
+    textManager->setPosition("downKeyInput", {350, 20});
+    textManager->setPosition("leftKeyInput", {350, 330});
+    textManager->setPosition("rightKeyInput", {350, 480});
+    textManager->setPosition("shootKeyInput", {350, 625});
+
+
+    this->splash.display();
 }
 
 /**
@@ -205,7 +295,7 @@ void MainMenu::setButtons() {
 
     getButtonByName("singlePlayer")->setText("SINGLEPLAYER", 25, "white");
     getButtonByName("multiPlayer")->setText("MULTIPLAYER", 25, "white");
-    getButtonByName("options")->setText("OPTIONS", 25, "white");
+    getButtonByName("options")->setText("SETTINGS", 25, "white");
     getButtonByName("quit")->setText("QUIT", 25, "white");
 
     onReleaseSinglePlayerButton();
@@ -237,7 +327,6 @@ void MainMenu::receive(gfx::MouseReleaseEvent event) {
         this->buttonPressed = "";
     }
     changeKeyBindingsEvent(event);
-
     if (this->manager.getWindow()->getSpriteByName("inputGameName") != nullptr && this->manager.getWindow()->getSpriteByName("inputGameName")->getToDraw() && isInBoundsSprite("inputGameName", event.getPosition())) {
         this->gameNameInputReleased = true;
         this->pwdInputReleased = false;
@@ -285,20 +374,20 @@ void MainMenu::receive(gfx::InputEvent event) {
         this->manager.getWindow()->getTextManager()->setText("joinPwd", gfx::InputEvent::input);
     }
     else if (this->_upInputReleased)  {
-	    manager.getWindow()->getTextManager()->setText("upKeyInput", "");
-    	manager.getWindow()->getTextManager()->setText("upKeyInput", gfx::InputEvent::input);
+        manager.getWindow()->getTextManager()->setText("upKeyInput", "");
+        manager.getWindow()->getTextManager()->setText("upKeyInput", gfx::InputEvent::input);
     }
     else if (this->_downInputReleased)  {
-	    manager.getWindow()->getTextManager()->setText("downKeyInput", gfx::InputEvent::input);
+        manager.getWindow()->getTextManager()->setText("downKeyInput", gfx::InputEvent::input);
     }
     else if (this->_leftInputReleased)  {
-	    manager.getWindow()->getTextManager()->setText("leftKeyInput", gfx::InputEvent::input);
+        manager.getWindow()->getTextManager()->setText("leftKeyInput", gfx::InputEvent::input);
     }
     else if (this->_rightInputReleased)  {
-	    manager.getWindow()->getTextManager()->setText("rightKeyInput", gfx::InputEvent::input);
+        manager.getWindow()->getTextManager()->setText("rightKeyInput", gfx::InputEvent::input);
     }
-    else if (this->_shootInputRelased)  {
-	    manager.getWindow()->getTextManager()->setText("shootKeyInput", gfx::InputEvent::input);
+    else if (this->_shootInputReleased)  {
+        manager.getWindow()->getTextManager()->setText("shootKeyInput", gfx::InputEvent::input);
     }
 
 }
@@ -347,7 +436,6 @@ void MainMenu::animation() {
 void MainMenu::reset(std::shared_ptr<Button> button) {
     if (button->getToDraw())
         button->setColorText(255, 255, 255, 255);
-//    this->selectedGame = "";
 }
 
 void MainMenu::displayServerPanelSprite(bool b) {
@@ -362,15 +450,11 @@ void MainMenu::displayServerPanelSprite(bool b) {
 
 void MainMenu::panelMode(bool b) {
     auto window = this->manager.getWindow();
-    window->getSpriteByName("header")->setToDraw(!b);
+    window->getSpriteByName("logo")->setToDraw(!b);
     getButtonByName("singlePlayer")->setToDraw(!b);
     getButtonByName("multiPlayer")->setToDraw(!b);
     getButtonByName("options")->setToDraw(!b);
     getButtonByName("quit")->setToDraw(!b);
-    if (!b)
-        window->getTextManager()->setColor("title", "white");
-    else
-        window->getTextManager()->setColor("title", 255, 255, 255, 0);
     this->splash.switching(!b);
 }
 
@@ -399,15 +483,19 @@ void MainMenu::ipInputDisplay(bool b) {
         window->getSpriteByName("inputIp")->setScale({0.6, 0.4});
         window->getSpriteByName("inputIp")->setPosition({400, 300});
         addButton("joinServer", "button");
-        getButtonByName("joinServer")->setPosition({500, 400});
-        getButtonByName("joinServer")->setText("JOIN SERVER", 25, "white");
-        getButtonByName("joinServer")->setPosText({getButtonByName("joinServer")->getPosition().x + 45, getButtonByName("joinServer")->getPosition().y + 40});
-        getButtonByName("joinServer")->setColorText(255, 255, 255, 255);
-        getButtonByName("joinServer")->setOnReLease([this]() {
-            ipInputDisplay(false);
-            createJoinButtonDisplay(true);
+        auto joinServer = getButtonByName("joinServer");
+        joinServer->setPosition({500, 400});
+        joinServer->setText("JOIN SERVER", 25, "white");
+        joinServer->setPosText({joinServer->getPosition().x + 45, joinServer->getPosition().y + 40});
+        joinServer->setColorText(255, 255, 255, 255);
+        joinServer->setOnReLease([this]() {
             this->ipToConnect = gfx::InputEvent::clear();
-            Logger::log(Logger::LogType::info, "You entered: " + this->ipToConnect);
+            if (!ipToConnect.empty()) {
+                ipInputDisplay(false);
+                createJoinButtonDisplay(true);
+                Logger::log(Logger::LogType::info,
+                            "You entered: " + this->ipToConnect);
+            }
         });
     }
     else {
@@ -424,21 +512,23 @@ void MainMenu::createJoinButtonDisplay(bool b) {
     panelMode(b);
     if (!buttonExist("create")) {
         addButton("create", "button");
-        getButtonByName("create")->setPosition({static_cast<float>(this->manager.getWindow()->getSize().x) / 2 - 284, static_cast<float>(this->manager.getWindow()->getSize().y) / 2 - 50});
-        getButtonByName("create")->setText("CREATE", 25, "white");
-        getButtonByName("create")->setColorText(255, 255, 255, 255);
-        getButtonByName("create")->setPosText({getButtonByName("create")->getPosition().x + 87, getButtonByName("create")->getPosition().y + 40});
-        getButtonByName("create")->setOnReLease([this]() {
+        auto create = getButtonByName("create");
+        create->setPosition({static_cast<float>(this->manager.getWindow()->getSize().x) / 2 - 284, static_cast<float>(this->manager.getWindow()->getSize().y) / 2 - 50});
+        create->setText("CREATE", 25, "white");
+        create->setColorText(255, 255, 255, 255);
+        create->setPosText({create->getPosition().x + 87, create->getPosition().y + 40});
+        create->setOnReLease([this]() {
             createJoinButtonDisplay(false);
             createInputDisplay(true);
         });
 
         addButton("join", "button");
-        getButtonByName("join")->setPosition({static_cast<float>(this->manager.getWindow()->getSize().x) / 2 + 15, static_cast<float>(this->manager.getWindow()->getSize().y) / 2 - 50});
-        getButtonByName("join")->setText("JOIN", 25, "white");
-        getButtonByName("join")->setColorText(255, 255, 255, 255);
-        getButtonByName("join")->setPosText({getButtonByName("join")->getPosition().x + 100, getButtonByName("join")->getPosition().y + 40});
-        this->getButtonByName("join")->setOnReLease([this](){
+        auto join = getButtonByName("join");
+        join->setPosition({static_cast<float>(this->manager.getWindow()->getSize().x) / 2 + 15, static_cast<float>(this->manager.getWindow()->getSize().y) / 2 - 50});
+        join->setText("JOIN", 25, "white");
+        join->setColorText(255, 255, 255, 255);
+        join->setPosText({join->getPosition().x + 100, join->getPosition().y + 40});
+        join->setOnReLease([this](){
             createJoinButtonDisplay(false);
             displayServerList(true);
         });
@@ -456,30 +546,43 @@ void MainMenu::displayServerList(bool b) {
     panelMode(b);
     if (b) {
         try {
-            this->game = std::make_shared<GameBase>(GameBase(this->ipToConnect, 50000, this->_evtMgr, 25565, 25566));
-        } catch (...) {
+            this->game = std::make_shared<GameBase>(GameBase(this->ipToConnect, 50003, this->_evtMgr, 25565, 25566));
+        } catch (std::exception &e) {
+            Logger::log(Logger::LogType::error, e.what());
+            this->manager.getWindow()->closeWindow();
             MainMenu menu;
             menu.launch();
+            std::_Exit(0);
+        } catch (...) {
+            Logger::log(Logger::LogType::info, "Error unknown");
             std::_Exit(0);
         }
     }
     displayServerPanelSprite(b);
     if (!buttonExist("joinGame") && b) {
-        for (const std::string &serverName : this->game->getGameList()) {
+        std::string localGame("THESECRETNAMEOFTHELOCALGAMEYOUMISTNOTCREATETHESAME");
+        auto gamesList = this->game->getGameList();
+        auto finded = std::find_if(gamesList.begin(), gamesList.end(), [localGame](std::string &name){return localGame == name;});
+
+        if (finded != gamesList.end())
+            gamesList.erase(finded);
+        for (const std::string &serverName : gamesList) {
             std::cout << "ServrName" << serverName << std::endl;
             addButton(serverName, "server_button");
-            getButtonByName(serverName)->setText(serverName, 20, "white");
-            getButtonByName(serverName)->setColorText(255, 255, 255, 255);
-            getButtonByName(serverName)->setPosition(pos);
-            getButtonByName(serverName)->setPosText({pos.x + 40, pos.y + 20});
+            auto serverNameButton = getButtonByName(serverName);
+            serverNameButton->setText(serverName, 20, "white");
+            serverNameButton->setColorText(255, 255, 255, 255);
+            serverNameButton->setPosition(pos);
+            serverNameButton->setPosText({pos.x + 40, pos.y + 20});
             onReleaseServerButtons(serverName);
             pos.y += 75;
         }
         addButton("joinGame", "small_button");
-        getButtonByName("joinGame")->setText("Join", 22, "white");
-        getButtonByName("joinGame")->setColorText(255, 255, 255, 255);
-        getButtonByName("joinGame")->setPosition({580, 595});
-        getButtonByName("joinGame")->setPosText({610, 605});
+        auto joinGameButton = getButtonByName("joinGame");
+        joinGameButton->setText("Join", 22, "white");
+        joinGameButton->setColorText(255, 255, 255, 255);
+        joinGameButton->setPosition({580, 595});
+        joinGameButton->setPosText({610, 605});
         onReleaseJoinGameButton();
     }
     else {
@@ -500,7 +603,7 @@ void MainMenu::onReleaseBackButton() {
         else if (buttonExist("joinGame") && getButtonByName("joinGame")->getToDraw())
             displayServerList(false);
         else if (buttonExist("upButton"))
-        	showOptionsMenu(false);
+            showOptionsMenu(false);
         getButtonByName("back")->setToDraw(false);
     });
 }
@@ -567,12 +670,14 @@ void MainMenu::pwdJoinInputDisplay(bool b) {
         window->getSpriteByName("pwdConnect")->setScale({0.6, 0.4});
         window->getSpriteByName("pwdConnect")->setPosition({400, 300});
         addButton("joinGameWithPwd", "button");
+        auto joinGameWithPwd = getButtonByName("joinGameWithPwd");
 
-        getButtonByName("joinGameWithPwd")->setPosition({500, 400});
-        getButtonByName("joinGameWithPwd")->setText("JOIN SERVER", 25, "white");
-        getButtonByName("joinGameWithPwd")->setPosText({getButtonByName("joinGameWithPwd")->getPosition().x + 45, getButtonByName("joinGameWithPwd")->getPosition().y + 40});
-        getButtonByName("joinGameWithPwd")->setColorText(255, 255, 255, 255);
-        getButtonByName("joinGameWithPwd")->setOnReLease([this]() {
+        joinGameWithPwd->setPosition({500, 400});
+        joinGameWithPwd->setText("JOIN GAME", 25, "white");
+        joinGameWithPwd->setPosText({joinGameWithPwd->getPosition().x + 45, joinGameWithPwd->getPosition().y + 40});
+        joinGameWithPwd->setColorText(255, 255, 255, 255);
+        joinGameWithPwd->setOnReLease([this]() {
+            this->passwd = gfx::InputEvent::clear();
             this->joinPwdGame = true;
         });
     }
@@ -580,171 +685,183 @@ void MainMenu::pwdJoinInputDisplay(bool b) {
         window->getSpriteByName("pwdConnect")->setToDraw(b);
         getButtonByName("joinGameWithPwd")->setToDraw(b);
     }
+    if (b) {
+        window->getTextManager()->setColor("enterPwd", 255, 255, 255, 255);
+    }
     if (!b) {
         this->manager.getWindow()->getTextManager()->setText("serverip", "");
+        window->getTextManager()->setColor("enterPwd", 255, 255, 255, 0);
     }
     this->drawIp = b;
 }
 
 void MainMenu::showOptionsMenu(bool b)
 {
-	panelMode(b);
-	backButtonDisplay(b);
-	auto window = this->manager.getWindow();
-	if (!buttonExist("upButton") && b) {
+    panelMode(b);
+    backButtonDisplay(b);
+    auto window = this->manager.getWindow();
+    if (!buttonExist("upButton") && b) {
 
 
-		addButton("VolumePlus", "button");
-		auto volumePlusButton = getButtonByName("VolumePlus");
-		volumePlusButton->setPosition({800, 200});
-		volumePlusButton->setText("Volume +", 25, "white");
-		volumePlusButton->setPosText({volumePlusButton->getPosition().x + 20, volumePlusButton->getPosition().y + 40});
+        addButton("VolumePlus", "button");
+        auto volumePlusButton = getButtonByName("VolumePlus");
+        volumePlusButton->setPosition({800, 200});
+        volumePlusButton->setText("Volume +", 25, "white");
+        volumePlusButton->setPosText({volumePlusButton->getPosition().x + 20, volumePlusButton->getPosition().y + 40});
 
-		volumePlusButton->setOnReLease([this]() {
-		});
-
-
-		addButton("VolumeDown", "button");
-		auto volumeDownButton = getButtonByName("VolumeDown");
-		volumeDownButton->setPosition({800, 400});
-		volumeDownButton->setText("Volume -", 25, "white");
-		volumeDownButton->setPosText({volumeDownButton->getPosition().x + 20, volumeDownButton->getPosition().y + 40});
-
-		volumeDownButton->setOnReLease([this]() {
-		});
+        volumePlusButton->setOnReLease([this]() {
+            if (this->volume + 10 < 100)
+                this->volume += 10;
+            else
+                this->volume = 100;
+            this->manager.getSoundManager().setVolume(this->volume);
+        });
 
 
-		window->addSprite("input_button", "downKeyInput");
-		window->getSpriteByName("downKeyInput")->setScale({0.2, 0.5});
-		window->getSpriteByName("downKeyInput")->setPosition({350, 20});
+        addButton("VolumeDown", "button");
+        auto volumeDownButton = getButtonByName("VolumeDown");
+        volumeDownButton->setPosition({800, 400});
+        volumeDownButton->setText("Volume -", 25, "white");
+        volumeDownButton->setPosText({volumeDownButton->getPosition().x + 20, volumeDownButton->getPosition().y + 40});
 
-		addButton("downButton", "button");
-		auto downButton = getButtonByName("downButton");
-		downButton->setPosition({240, 10});
-
-		downButton->setText("Down", 25, "white");
-		downButton->setScale({0.4, 0.9});
-		downButton->setPosText({downButton->getPosition().x + 40, downButton->getPosition().y + 40});
-		downButton->setColorText(255, 255, 255, 255);
-
-
-		window->addSprite("input_button", "upKeyInput");
-		window->getSpriteByName("upKeyInput")->setScale({0.2, 0.5});
-		window->getSpriteByName("upKeyInput")->setPosition({350, 180});
-		addButton("upButton", "button");
-
-		auto UpButton = getButtonByName("upButton");
-		UpButton->setPosition({240, 170});
-
-		UpButton->setText("UP", 25, "white");
-		UpButton->setScale({0.4, 0.9});
-		UpButton->setPosText({UpButton->getPosition().x + 45, UpButton->getPosition().y + 40});
-		UpButton->setColorText(255, 255, 255, 255);
+        volumeDownButton->setOnReLease([this]() {
+            if (this->volume - 10 > 0)
+                this->volume -= 10;
+            else
+                this->volume = 0;
+            this->manager.getSoundManager().setVolume(this->volume);
+        });
 
 
-		window->addSprite("input_button", "leftKeyInput");
-		window->getSpriteByName("leftKeyInput")->setScale({0.2, 0.5});
-		window->getSpriteByName("leftKeyInput")->setPosition({350, 330});
+        window->addSprite("input_button", "downKeyInput");
+        window->getSpriteByName("downKeyInput")->setScale({0.2, 0.5});
+        window->getSpriteByName("downKeyInput")->setPosition({350, 20});
 
-		addButton("leftButton", "button");
-		auto leftButton = getButtonByName("leftButton");
-		leftButton->setPosition({240, 325});
+        addButton("downButton", "button");
+        auto downButton = getButtonByName("downButton");
+        downButton->setPosition({240, 10});
 
-		leftButton->setText("Left", 25, "white");
-		leftButton->setScale({0.4, 0.9});
-		leftButton->setPosText({leftButton->getPosition().x + 20, leftButton->getPosition().y + 40});
-		leftButton->setColorText(255, 255, 255, 255);
+        downButton->setText("Down", 25, "white");
+        downButton->setScale({0.4, 0.9});
+        downButton->setPosText({downButton->getPosition().x + 40, downButton->getPosition().y + 40});
+        downButton->setColorText(255, 255, 255, 255);
 
 
+        window->addSprite("input_button", "upKeyInput");
+        window->getSpriteByName("upKeyInput")->setScale({0.2, 0.5});
+        window->getSpriteByName("upKeyInput")->setPosition({350, 180});
+        addButton("upButton", "button");
 
-		window->addSprite("input_button", "rightKeyInput");
-		window->getSpriteByName("rightKeyInput")->setScale({0.2, 0.5});
-		window->getSpriteByName("rightKeyInput")->setPosition({350, 480});
+        auto UpButton = getButtonByName("upButton");
+        UpButton->setPosition({240, 170});
 
-		addButton("rightButton", "button");
-		auto rightButton = getButtonByName("rightButton");
-		rightButton->setPosition({240, 470});
+        UpButton->setText("UP", 25, "white");
+        UpButton->setScale({0.4, 0.9});
+        UpButton->setPosText({UpButton->getPosition().x + 45, UpButton->getPosition().y + 40});
+        UpButton->setColorText(255, 255, 255, 255);
 
-		rightButton->setText("right", 25, "white");
-		rightButton->setScale({0.4, 0.9});
-		rightButton->setPosText({rightButton->getPosition().x + 20, rightButton->getPosition().y + 40});
-		rightButton->setColorText(255, 255, 255, 255);
+
+        window->addSprite("input_button", "leftKeyInput");
+        window->getSpriteByName("leftKeyInput")->setScale({0.2, 0.5});
+        window->getSpriteByName("leftKeyInput")->setPosition({350, 330});
+
+        addButton("leftButton", "button");
+        auto leftButton = getButtonByName("leftButton");
+        leftButton->setPosition({240, 325});
+
+        leftButton->setText("Left", 25, "white");
+        leftButton->setScale({0.4, 0.9});
+        leftButton->setPosText({leftButton->getPosition().x + 20, leftButton->getPosition().y + 40});
+        leftButton->setColorText(255, 255, 255, 255);
 
 
 
-		window->addSprite("input_button", "shootKeyInput");
-		window->getSpriteByName("shootKeyInput")->setScale({0.2, 0.5});
-		window->getSpriteByName("shootKeyInput")->setPosition({350, 625});
+        window->addSprite("input_button", "rightKeyInput");
+        window->getSpriteByName("rightKeyInput")->setScale({0.2, 0.5});
+        window->getSpriteByName("rightKeyInput")->setPosition({350, 480});
 
-		addButton("shootButton", "button");
-		auto shootButton = getButtonByName("shootButton");
-		shootButton->setPosition({240, 615});
+        addButton("rightButton", "button");
+        auto rightButton = getButtonByName("rightButton");
+        rightButton->setPosition({240, 470});
 
-		shootButton->setText("shoot", 25, "white");
-		shootButton->setScale({0.4, 0.9});
-		shootButton->setPosText({shootButton->getPosition().x + 20, shootButton->getPosition().y + 40});
-		shootButton->setColorText(255, 255, 255, 255);
+        rightButton->setText("right", 25, "white");
+        rightButton->setScale({0.4, 0.9});
+        rightButton->setPosText({rightButton->getPosition().x + 20, rightButton->getPosition().y + 40});
+        rightButton->setColorText(255, 255, 255, 255);
 
-	}
-	else {
-			window->getSpriteByName("upKeyInput")->setToDraw(b);
-			getButtonByName("upButton")->setToDraw(b);
 
-			window->getSpriteByName("leftKeyInput")->setToDraw(b);
-			getButtonByName("leftButton")->setToDraw(b);
 
-			window->getSpriteByName("rightKeyInput")->setToDraw(b);
-			getButtonByName("rightButton")->setToDraw(b);
+        window->addSprite("input_button", "shootKeyInput");
+        window->getSpriteByName("shootKeyInput")->setScale({0.2, 0.5});
+        window->getSpriteByName("shootKeyInput")->setPosition({350, 625});
 
-			window->getSpriteByName("downKeyInput")->setToDraw(b);
-			getButtonByName("downButton")->setToDraw(b);
+        addButton("shootButton", "button");
+        auto shootButton = getButtonByName("shootButton");
+        shootButton->setPosition({240, 615});
 
-			window->getSpriteByName("shootKeyInput")->setToDraw(b);
-			getButtonByName("shootButton")->setToDraw(b);
+        shootButton->setText("shoot", 25, "white");
+        shootButton->setScale({0.4, 0.9});
+        shootButton->setPosText({shootButton->getPosition().x + 20, shootButton->getPosition().y + 40});
+        shootButton->setColorText(255, 255, 255, 255);
 
-		getButtonByName("VolumeDown")->setToDraw(b);
-				getButtonByName("VolumePlus")->setToDraw(b);
+    }
+    else {
+        window->getSpriteByName("upKeyInput")->setToDraw(b);
+        getButtonByName("upButton")->setToDraw(b);
 
-		manager.getWindow()->getTextManager()->setText("downKeyInput", "");
-		manager.getWindow()->getTextManager()->setText("leftKeyInput", "");
-		manager.getWindow()->getTextManager()->setText("rightKeyInput", "");
-		manager.getWindow()->getTextManager()->setText("upKeyInput", "");
-		manager.getWindow()->getTextManager()->setText("shootKeyInput", "");
+        window->getSpriteByName("leftKeyInput")->setToDraw(b);
+        getButtonByName("leftButton")->setToDraw(b);
 
-	}
+        window->getSpriteByName("rightKeyInput")->setToDraw(b);
+        getButtonByName("rightButton")->setToDraw(b);
+
+        window->getSpriteByName("downKeyInput")->setToDraw(b);
+        getButtonByName("downButton")->setToDraw(b);
+
+        window->getSpriteByName("shootKeyInput")->setToDraw(b);
+        getButtonByName("shootButton")->setToDraw(b);
+
+        getButtonByName("VolumeDown")->setToDraw(b);
+        getButtonByName("VolumePlus")->setToDraw(b);
+
+        manager.getWindow()->getTextManager()->setText("downKeyInput", "");
+        manager.getWindow()->getTextManager()->setText("leftKeyInput", "");
+        manager.getWindow()->getTextManager()->setText("rightKeyInput", "");
+        manager.getWindow()->getTextManager()->setText("upKeyInput", "");
+        manager.getWindow()->getTextManager()->setText("shootKeyInput", "");
+
+    }
 
 }
 
 void MainMenu::changeKeyBindingsEvent(const gfx::MouseReleaseEvent &event)
 {
-	this->gameNameInputReleased = false;
-	this->pwdInputReleased = false;
-	this->drawServerName = false;
-	this->drawPwd = false;
-	_downInputReleased = false;
-	_leftInputReleased = false;
-	_rightInputReleased = false;
-	_shootInputRelased = false;
-	_upInputReleased = false;
+    this->gameNameInputReleased = false;
+    this->pwdInputReleased = false;
+    this->drawServerName = false;
+    this->drawPwd = false;
+    _downInputReleased = false;
+    _leftInputReleased = false;
+    _rightInputReleased = false;
+    _shootInputReleased = false;
+    _upInputReleased = false;
 
-	if (this->manager.getWindow()->getSpriteByName("upKeyInput") != nullptr && this->manager.getWindow()->getSpriteByName("upKeyInput")->getToDraw() && isInBoundsSprite("upKeyInput", event.getPosition()))
-		_upInputReleased = true;
+    if (this->manager.getWindow()->getSpriteByName("upKeyInput") != nullptr && this->manager.getWindow()->getSpriteByName("upKeyInput")->getToDraw() && isInBoundsSprite("upKeyInput", event.getPosition()))
+        _upInputReleased = true;
 
-	else if (this->manager.getWindow()->getSpriteByName("downKeyInput") != nullptr && this->manager.getWindow()->getSpriteByName("downKeyInput")->getToDraw() && isInBoundsSprite("downKeyInput", event.getPosition()))
-		_downInputReleased = true;
+    else if (this->manager.getWindow()->getSpriteByName("downKeyInput") != nullptr && this->manager.getWindow()->getSpriteByName("downKeyInput")->getToDraw() && isInBoundsSprite("downKeyInput", event.getPosition()))
+        _downInputReleased = true;
 
-	else if (this->manager.getWindow()->getSpriteByName("leftKeyInput") != nullptr && this->manager.getWindow()->getSpriteByName("leftKeyInput")->getToDraw() && isInBoundsSprite("leftKeyInput", event.getPosition()))
-		_leftInputReleased = true;
+    else if (this->manager.getWindow()->getSpriteByName("leftKeyInput") != nullptr && this->manager.getWindow()->getSpriteByName("leftKeyInput")->getToDraw() && isInBoundsSprite("leftKeyInput", event.getPosition()))
+        _leftInputReleased = true;
 
-	else if (this->manager.getWindow()->getSpriteByName("rightKeyInput") != nullptr && this->manager.getWindow()->getSpriteByName("rightKeyInput")->getToDraw() && isInBoundsSprite("rightKeyInput", event.getPosition()))
-		_rightInputReleased = true;
+    else if (this->manager.getWindow()->getSpriteByName("rightKeyInput") != nullptr && this->manager.getWindow()->getSpriteByName("rightKeyInput")->getToDraw() && isInBoundsSprite("rightKeyInput", event.getPosition()))
+        _rightInputReleased = true;
 
-	else if (this->manager.getWindow()->getSpriteByName("shootKeyInput") != nullptr && this->manager.getWindow()->getSpriteByName("shootKeyInput")->getToDraw() && isInBoundsSprite("shootKeyInput", event.getPosition()))
-		_shootInputRelased = true;
+    else if (this->manager.getWindow()->getSpriteByName("shootKeyInput") != nullptr && this->manager.getWindow()->getSpriteByName("shootKeyInput")->getToDraw() && isInBoundsSprite("shootKeyInput", event.getPosition()))
+        _shootInputReleased = true;
 
-	gfx::InputEvent::clear();
+    gfx::InputEvent::clear();
 
 
 }
-
-

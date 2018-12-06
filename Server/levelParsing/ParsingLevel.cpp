@@ -7,23 +7,13 @@
 
 #include "ParsingLevel.hpp"
 
-Game::ParsingLevel::ParsingLevel() :
-        m_levelPath("assets/Levels/"),
-        m_isRunning(false),
-        m_currentLevel(1) {
-    m_currentMonster._timer = -1.0f;
-}
-
-Game::ParsingLevel::~ParsingLevel() {
-
+Game::ParsingLevel::ParsingLevel() : m_levelPath("./assets/Levels/"), m_isRunning(false), m_currentLevel(-1) {
 }
 
 void Game::ParsingLevel::startGame() {
     m_isRunning = true;
-    setStreamLevel(1);
-    m_time = 0;
-    m_stream >> m_currentMonster;
-    m_stream >> m_currentMonster2;
+    if (!setStreamLevel(1))
+        rtype::Exception("No level config for level 1");
 }
 
 std::vector<Game::MonsterInfo> Game::ParsingLevel::getMonster(float time) {
@@ -33,19 +23,44 @@ std::vector<Game::MonsterInfo> Game::ParsingLevel::getMonster(float time) {
         throw rtype::Exception("startGame never called");
 
     m_time += time;
-    while (m_currentMonster._timer <= m_time && !m_currentMonster._endGame) {
-        monsterList.push_back(m_currentMonster);
-        m_currentMonster = m_currentMonster2;
-        m_stream >> m_currentMonster2;
-        if (m_stream.eof()) {
-            m_currentMonster2._endGame = true;
-        }
+
+    for (auto it = m_monsters.begin(); it != m_monsters.lower_bound(m_time);) {
+        monsterList.push_back(std::move(it->second));
+        it = m_monsters.erase(it);
     }
+    if (m_monsters.empty())
+        m_end = true;
     return monsterList;
 }
 
-void Game::ParsingLevel::setStreamLevel(int level) {
+bool Game::ParsingLevel::setStreamLevel(int level) {
+    std::string line;
+
+    m_time = 0;
+    m_currentLevel = level;
     m_stream = std::ifstream(m_levelPath + "level" + std::to_string(level) + ".config");
-    if (!m_stream.is_open())
+    if (!m_stream.is_open()) {
         m_stream = std::ifstream("../assets/Levels/level" + std::to_string(level) + ".config");
+    }
+    if (!m_stream.is_open())
+        return false;
+    std::getline(m_stream, line);
+    Game::MonsterInfo m_currentMonster;
+
+    m_stream >> m_currentMonster;
+    while (!m_currentMonster._endGame) {
+        m_monsters.emplace(m_currentMonster._timer, m_currentMonster);
+        m_stream >> m_currentMonster;
+    }
+    m_end = false;
+    m_currentMonster._endGame = false;
+    return m_stream.is_open();
+}
+
+int Game::ParsingLevel::getLevel() const noexcept {
+    return m_currentLevel;
+}
+
+bool Game::ParsingLevel::isEnd() const noexcept {
+    return m_end;
 }

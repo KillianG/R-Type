@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <chrono>
 #include <cstdint>
 #include "../../libs/Exception/Exception.hpp"
@@ -37,6 +38,15 @@ namespace Game {
         void translate(float toX = 0, float toY = 0) {
             x += toX;
             y += toY;
+        }
+
+        static Game::vector2f DegreeToVec(float direction, float distance = 1) {
+            Game::vector2f vec {};
+
+            direction = M_PI * direction / 180.0f;
+            vec.x = std::cos(direction) * distance;
+            vec.y = std::sin(direction) * distance;
+            return vec;
         }
     };
 }

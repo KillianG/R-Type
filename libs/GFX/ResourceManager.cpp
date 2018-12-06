@@ -14,7 +14,6 @@ std::shared_ptr<sf::Music> ResourceManager::loadMusic(fs::path &&filename) {
     for (auto &it :fs::recursive_directory_iterator(_resourceDirectoryPath)) {
         if (it.status().type() !=fs::file_type::directory) {
             if (it.path().filename().stem() == filename) {
-                Logger::log(Logger::LogType::info, "Loaded " / it.path());
                 return _musicRegistry.openFromFile(std::move(it.path().stem()), it.path());
             }
         }
@@ -31,7 +30,6 @@ std::shared_ptr<sf::Texture> ResourceManager::loadTexture(fs::path &&filename) {
     for (auto &it :fs::recursive_directory_iterator(_resourceDirectoryPath)) {
         if (it.status().type() !=fs::file_type::directory) {
             if (it.path().filename().stem() == filename) {
-                Logger::log(Logger::LogType::info, "Loaded " / it.path());
                 return _textureRegistry.loadFromFile(std::move(it.path().stem()), it.path());
             }
         }
@@ -48,7 +46,6 @@ std::shared_ptr<sf::Font> ResourceManager::loadFont(fs::path &&filename) {
     for (auto &it :fs::recursive_directory_iterator(_resourceDirectoryPath)) {
         if (it.status().type() !=fs::file_type::directory) {
             if (it.path().filename().stem() == filename) {
-                Logger::log(Logger::LogType::info, "Loaded" / it.path());
                 return _fontRegistry.loadFromFile(std::move(it.path().stem()), it.path());
             }
         }
@@ -82,3 +79,10 @@ std::shared_ptr<sf::Texture> ResourceManager::getTexture(const std::string &id) 
 std::shared_ptr<sf::Font> ResourceManager::getFont(const std::string &id) {
     return _fontRegistry.get(id);
 }
+
+ResourceManager::ResourceManager(fs::path &&resourceDirectoryPath) noexcept: _resourceDirectoryPath(std::move(resourceDirectoryPath)) {
+
+#ifdef __linux__
+    Logger::log(Logger::LogType::info, _resourceDirectoryPath);
+#endif
+};

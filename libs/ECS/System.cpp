@@ -20,10 +20,9 @@ ecs::System::System(ecs::Manager &manager) : m_manager(manager)
  * Update any entity linked to the system
  * @param updateTime time laps the system need to update each entity
  */
-void ecs::System::updateEntities(float updateTime)
-{
-	for (auto elem : m_entities)
-		updateEntity(updateTime, elem);
+void ecs::System::updateEntities(float updateTime) {
+	for (auto elem = m_entities.begin(); elem != m_entities.end();)
+		updateEntity(updateTime, *elem++);
 }
 
 /**
@@ -40,11 +39,11 @@ const std::vector<std::set<ecs::ComponentType>> &ecs::System::getNeededComponent
  * remove an Entity from this system. So it will no longeur update it
  * @param entity The Entity to remove
  */
-void ecs::System::removeEntity(ecs::Entity entity)
+size_t ecs::System::removeEntity(ecs::Entity entity)
 {
 	if (m_entities.find(entity) == m_entities.end())
 		throw (std::runtime_error("there is no such Entity registered"));
-	m_entities.erase(entity);
+	return m_entities.erase(entity);
 }
 
 /**

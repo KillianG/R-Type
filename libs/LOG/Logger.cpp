@@ -20,7 +20,12 @@ const std::map<Logger::LogType, const std::string> Logger::logTypeMap = {
  * @param msg Output message
  */
 void Logger::log(Logger::LogType type, const std::string &msg) {
+#ifdef __unix__
     auto currentTime = getTime();
+#else
+    std::string currentTime("");
+#endif
+
     std::string printableType = getType(type);
     if (!Logger::myFile.is_open()) {
         Logger::myFile.open("log.txt", std::ios_base::app);
@@ -30,6 +35,7 @@ void Logger::log(Logger::LogType type, const std::string &msg) {
     std::cout << "[" << currentTime << "][" << printableType << "] " << msg << std::endl;
 }
 
+#ifdef __unix__
 /**
  * Function that gives the current time hh:mm:ss
  * @return The current time
@@ -40,6 +46,7 @@ std::_Put_time<char> Logger::getTime() {
     auto currentTime = std::put_time(std::localtime(&now_c), "%T");
     return (currentTime);
 }
+#endif
 
 /**
  * Function that gives the correct type to output giving a Logger::LogType
@@ -50,6 +57,7 @@ std::string Logger::getType(Logger::LogType type) {
     return Logger::logTypeMap.find(type)->second;
 }
 
+#ifdef __unix__
 /**
  * Function that gets the logs of the entire file
  * @return a string of the logs
@@ -61,6 +69,7 @@ std::string Logger::getLogs() {
     logFile.close();
     return logString.str();
 }
+#endif
 
 /**
  * Function that closes the file

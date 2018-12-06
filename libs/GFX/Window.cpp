@@ -51,7 +51,7 @@ void gfx::Window::setVisible(bool visible) {
  * @param name name of the sprite, important, you will use it later to get your sprite
  */
 void gfx::Window::addSprite(std::string path, std::string name) {
-    this->sprites.push_back(std::shared_ptr<gfx::Sprite>(new gfx::Sprite(path, name)));
+    this->sprites.push_back(std::make_shared<gfx::Sprite>(path, name));
 }
 
 /**
@@ -67,6 +67,10 @@ void gfx::Window::run() {
         this->events->getEvents(this->window);
     this->window->display();
     this->clearWindow();
+}
+
+std::vector<std::shared_ptr<gfx::Sprite>> gfx::Window::getSprites() const {
+    return this->sprites;
 }
 
 /**
@@ -138,6 +142,7 @@ std::shared_ptr<gfx::TextManager> gfx::Window::getTextManager() {
 void gfx::Window::removeSprite(std::string name) {
     for (auto it = sprites.begin(); it != sprites.end(); it++) {
         if ((*it)->getName() == name) {
+            (*it).reset();
             sprites.erase(it);
             break;
         }

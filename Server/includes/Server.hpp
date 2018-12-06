@@ -25,6 +25,7 @@ namespace rtype {
 	private:
 		void createGame(network::requestInfo &);
 		void joinGame(network::requestInfo &);
+		void leaveGame(network::requestInfo &);
 
 		std::map<std::string, std::thread> m_games;
 		std::map<std::string, gameInfo> m_gamesInfo;

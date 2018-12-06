@@ -20,21 +20,31 @@
  *  Main Menu class that displays the menu windows.
  *  Each event will be called from there.
  */
+
+namespace fs = std::experimental::filesystem;
+
 class MainMenu : public Receiver<MainMenu> {
 public:
     MainMenu();
     ~MainMenu() = default;
     void launch();
-    void receive(gfx::ClickEvent event[[maybe_unused]]);
-    void receive(gfx::MouseReleaseEvent event[[maybe_unused]]);
-    void receive(gfx::MouseMoveEvent event[[maybe_unused]]);
-    void receive(gfx::InputEvent event[[maybe_unused]]);
+    void receive(gfx::ClickEvent event);
+    void receive(gfx::MouseReleaseEvent event);
+    void receive(gfx::MouseMoveEvent event);
+    void receive(gfx::InputEvent event);
 
     EventManager _evtMgr {};
 private:
 
+	using clock = std::chrono::steady_clock;
 	void showOptionsMenu(bool b);
 
+	void doThisEveryMs(int ms, std::function<void ()> f);
+
+	std::string passwd;
+
+	void playCinematic();
+	bool stopCinem { false };
     std::shared_ptr<GameBase> game;
     bool createGame;
     bool joinPwdGame;
@@ -76,7 +86,7 @@ private:
     bool _downInputReleased;
     bool _leftInputReleased;
     bool _rightInputReleased;
-    bool _shootInputRelased;
+    bool _shootInputReleased;
 
     std::string _upInput;
     std::string _downInput;
@@ -89,6 +99,7 @@ private:
     std::string ipToConnect;
     std::string selectedGame;
     std::string buttonPressed;
+    float volume;
 
     void changeKeyBindingsEvent(const gfx::MouseReleaseEvent &event);
 

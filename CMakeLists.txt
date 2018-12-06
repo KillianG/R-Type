@@ -5,7 +5,7 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE )
 endif()
 
 project(R-Type)
-#execute_process(COMMAND git submodule update --init --recursive)
+execute_process(COMMAND git submodule update --init --recursive)
 
 ENABLE_TESTING()
 
@@ -21,7 +21,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-#add_subdirectory(${CMAKE_SOURCE_DIR}/libs/SFML)
+add_subdirectory(${CMAKE_SOURCE_DIR}/libs/SFML)
 add_subdirectory(${CMAKE_SOURCE_DIR}/libs)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Server/Monsters)
 
@@ -75,10 +75,10 @@ target_include_directories(RTypeServer PRIVATE
 		)
 
 
-target_link_libraries(ClientTest PRIVATE GFX Logger Exception pthread network boost_system)
-target_link_libraries(RTypeClient PRIVATE GFX Logger Exception pthread network boost_system)
-target_link_libraries(ServerTest PRIVATE ECS Logger network pthread Logger Exception boost_filesystem boost_system dl)
-target_link_libraries(RTypeServer PRIVATE ECS Logger network pthread Logger Exception boost_filesystem boost_system dl)
+target_link_libraries(ClientTest PRIVATE GFX Logger Exception pthread network boost_system sfml-audio sfml-system sfml-graphics sfml-window)
+target_link_libraries(RTypeClient PRIVATE GFX Logger Exception pthread network boost_system sfml-audio sfml-system sfml-graphics sfml-window)
+target_link_libraries(ServerTest PRIVATE ECS Logger network pthread Logger Exception boost_filesystem boost_system dl -lstdc++fs)
+target_link_libraries(RTypeServer PRIVATE ECS Logger network pthread Logger Exception boost_filesystem boost_system dl -lstdc++fs)
 
-target_compile_options(RTypeServer PRIVATE -Wall -g3)
-target_compile_options(RTypeClient PRIVATE -Wall -fPIC -g3)
+target_compile_options(RTypeServer PRIVATE -Wall)
+target_compile_options(RTypeClient PRIVATE -Wall -fPIC)

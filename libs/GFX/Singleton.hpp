@@ -31,7 +31,6 @@ namespace gfx {
     template<class T>
     T &Singleton<T>::get() {
         static T m_instance;
-        Logger::log(Logger::LogType::info, "Getting singleton");
         return m_instance;
     }
 }

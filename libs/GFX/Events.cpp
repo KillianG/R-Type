@@ -22,6 +22,10 @@ gfx::Event::Event(EventManager &mgr) : _mgr(mgr){
 void gfx::Event::getEvents(std::shared_ptr<sf::RenderWindow> window) {
     sf::Event event;
     while (window->pollEvent(event)) {
+        if (event.type == sf::Event::KeyReleased) {
+            if (event.key.code == sf::Keyboard::Space)
+                this->_mgr.emit<gfx::KeyReleasedEvent>(std::forward<std::string>("Space"));
+        }
         if (event.type == sf::Event::MouseButtonPressed)
             this->_mgr.emit<gfx::ClickEvent>(std::forward<gfx::Vector2I>({event.mouseButton.x, event.mouseButton.y}));
         if (event.type == sf::Event::MouseButtonReleased)
@@ -35,14 +39,18 @@ void gfx::Event::getEvents(std::shared_ptr<sf::RenderWindow> window) {
             if (event.key.code == sf::Keyboard::Escape)
                 this->_mgr.emit<gfx::KeyPressedEvent>(std::forward<std::string>("Escape"));
         }
-        if (event.type == sf::Event::KeyReleased) {
-            if (event.key.code == sf::Keyboard::Space)
-                this->_mgr.emit<gfx::KeyReleasedEvent>(std::forward<std::string>("Space"));
-        }
         if (event.type == sf::Event::TextEntered) {
             std::string str = "";
-            sf::Utf32::encodeAnsi(event.text.unicode, std::back_inserter(str), 'e');
-            this->_mgr.emit<gfx::InputEvent>(std::forward<std::string>(str));
+            if (event.text.unicode == 8)
+                this->_mgr.emit<gfx::InputEvent>();
+            else {
+                sf::Utf32::encodeAnsi(event.text.unicode, std::back_inserter(str), 'e');
+                for (auto a : str) {
+                    if (!std::isalnum(a) && a != '.')
+                        return;
+                }
+                this->_mgr.emit<gfx::InputEvent>(std::forward<std::string>(str));
+            }
         }
     }
 }
@@ -93,6 +101,11 @@ const std::string &gfx::KeyReleasedEvent::getKey() const {
 }
 
 std::string gfx::InputEvent::input = "";
+
+gfx::InputEvent::InputEvent() {
+    if (gfx::InputEvent::input.size() > 0)
+        gfx::InputEvent::input.pop_back();
+}
 
 gfx::InputEvent::InputEvent(std::string input) {
     gfx::InputEvent::input += input;

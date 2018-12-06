@@ -17,6 +17,13 @@
 
 namespace network
 {
+
+
+	struct GameScore
+	{
+		int id;
+		int score;
+	};
 	/**
 	 * Data structure for the entity type GFX information (mainly sprite path)
 	 * These data are for the gfx environment
@@ -60,8 +67,8 @@ namespace network
 		ecs::Entity entityId;
 		ecs::Entity entityType;
 		size_t animTime;
-		float X;
-		float Y;
+		double X;
+		double Y;
 	};
 
 	/**

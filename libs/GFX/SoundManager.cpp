@@ -100,5 +100,16 @@ void gfx::SoundManager::addMusic(std::string name, std::string musicName) {
     }
     this->musics.insert(std::make_pair<std::string, std::shared_ptr<sf::Music>>(std::string(name),
                                                                                 ResourceManager::get().loadMusic(musicName)));
+    it = this->musics.find(name);
+    if (it == this->musics.end())
+        throw rtype::Exception("Error no music loaded with this name: " + name);
+    it->second->setVolume(this->volume);
     Logger::log(Logger::LogType::info, "New music added to map");
+}
+
+void gfx::SoundManager::setVolume(float vol) {
+    this->volume = vol;
+    for (auto &&music : this->musics) {
+        music.second->setVolume(vol);
+    }
 }

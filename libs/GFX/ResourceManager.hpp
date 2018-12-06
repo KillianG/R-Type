@@ -70,14 +70,8 @@ private:
     /**
      * @brief Set the root assets path
      */
-    explicit ResourceManager(fs::path &&resourceDirectoryPath = (fs::current_path() / "assets")) noexcept: _resourceDirectoryPath(std::move(resourceDirectoryPath)) {
-
-#ifdef __linux__ 
-        Logger::log(Logger::LogType::info, _resourceDirectoryPath);
-#endif
-    };
-
-    ResourceManager(const ResourceManager &rMgr){};
+    explicit ResourceManager(fs::path &&resourceDirectoryPath = (fs::current_path() / "assets")) noexcept;
+    ResourceManager(const ResourceManager &rMgr){}
 
     fs::path _resourceDirectoryPath;
 

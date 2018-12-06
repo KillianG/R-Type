@@ -4,12 +4,21 @@
 
 #pragma once
 
-#include <string>
-#include <functional>
-#include "GameConfig.hpp"
+#include "Utils.hpp"
 #include "../../libs/ECS/ComponentManager.hpp"
 
-class IEnnemy;
+struct PowerUpShield : public ecs::Component {
+        static const ecs::ComponentType m_type;
+};
+
+struct PowerUpSpeed : public ecs::Component {
+    static const ecs::ComponentType m_type;
+
+    explicit PowerUpSpeed(size_t speed) : _speed(speed) {}
+
+    float _speed;
+};
+
 /**
  * Define a Type of enemy or player
  */
@@ -39,9 +48,17 @@ struct TeamComponent : public ecs::Component {
 struct Player : public ecs::Component {
     static const ecs::ComponentType m_type;
 
-    explicit Player(ecs::Entity &id) : _id(id) {}
+    explicit Player(ecs::Entity &id, ecs::Entity idShield) : _id(id), _shieldEntity(idShield) {}
 
+    Player &operator+=(const PowerUpSpeed &powerUp) {
+        _speed += powerUp._speed;
+        return *this;
+    }
+
+    float _speed { 0 };
+    size_t _shield { 1 };
     ecs::Entity _id;
+    ecs::Entity _shieldEntity;
     Game::vector2f _dir;
 };
 
@@ -62,9 +79,10 @@ struct Monster : public ecs::Component {
 struct Missile : public ecs::Component {
     static const ecs::ComponentType m_type;
 
-    explicit Missile(int charge) : _charge(charge) {}
+    explicit Missile(int charge, const Game::vector2f &dir) : _charge(charge), _dir(dir) {}
 
     int _charge { 0 };
+    Game::vector2f _dir;
 };
 
 /**
@@ -73,7 +91,8 @@ struct Missile : public ecs::Component {
 struct MovableHitBox : public ecs::Component {
     static const ecs::ComponentType m_type;
 
-    MovableHitBox(const Game::box &dims, const Game::vector2f &pos, size_t spriteId, size_t animSize) : _dims(dims), _pos(pos), _spriteType(spriteId), _animSize(animSize) {}
+    MovableHitBox(const Game::box &dims, const Game::vector2f &pos, size_t spriteId, size_t animSize, float frameRate = 0.1f)
+    : _dims(dims), _pos(pos), _spriteType(spriteId), _animSize(animSize), _frameRate(frameRate) {}
 
     /**
      * @brief Checks collision between two hitboxes
@@ -105,23 +124,13 @@ struct MovableHitBox : public ecs::Component {
         return _animTime;
     }
 
-    /**
-     * @brief Sets the animation's informations
-     * @param spriteType [in] which sprite
-     * @param animSize [in] Nb frames in the animation
-     */
-    void setAnimInfos(size_t spriteType, size_t animSize) {
-        _spriteType = spriteType;
-        _animSize = animSize;
-    }
-
     Game::box _dims;
     Game::vector2f _pos;
     size_t _spriteType { 1 };
 
 private:
     float _time { 0 };
-    size_t _animSize { 5 };
+    size_t _animSize { 0 };
     size_t _animTime { 0 };
-    float _frameRate { 0.2f };
+    float _frameRate;
 };

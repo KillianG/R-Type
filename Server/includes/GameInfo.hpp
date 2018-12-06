@@ -17,7 +17,7 @@ namespace rtype
 	{
 		// std::map needed
 		gameInfo();
-		gameInfo(std::shared_ptr <network::UdpSocket> &socket);
+		explicit gameInfo(std::shared_ptr <network::UdpSocket> &socket);
 		gameInfo(std::shared_ptr <network::UdpSocket> &socket, std::string password);
 
 

@@ -44,6 +44,8 @@ namespace network
 			m_playerMoveString.emplace(playerMove::DOWN, "DOWN");
 			m_playerMoveString.emplace(playerMove::RIGHT, "RIGHT");
 			m_playerMoveString.emplace(playerMove::LEFT, "LEFT");
+
+			m_gameScore.resize(4);
 		}
 
 
@@ -233,6 +235,25 @@ namespace network
 			return toRet;
 		}
 
+		void receiveGameScore(std::istringstream &s)
+		{
+			std::regex regex("id: ([0-9]+) score: ([0-9]+)");
+			std::regex regexEnd("id: ([0-9]+) score: ([0-9]+)\r");
+			std::string elem;
+			std::smatch matches;
+			int i = 0;
+
+			while (getline(s, elem))
+			{
+				if (elem[elem.size() - 1] == '\r')
+					regex = regexEnd;
+				if (!std::regex_match(elem, matches, regex))
+					throw rtype::Exception("RFC Error");
+				m_gameScore[i] = {std::stoi(matches[1]), std::stoi(matches[2])};
+				i++;
+			}
+		}
+
 		/**
 		 * #TODO check server responses for client requests
 		 * Command: INFO UPDATE OVER STATS)
@@ -258,8 +279,10 @@ namespace network
 				} else if (request.compare(0, 7, "REMOVE:") == 0) {
 					m_remove.emplace_back(stoi(request.substr(8)));
 					continue ;
-				}
-				if (request.compare(0, 5, "GAME ") != 0)
+				} else if (request == "SCORE:") {
+					receiveGameScore(s);
+					continue ;
+				} else if (request.compare(0, 5, "GAME ") != 0)
 					throw rtype::Exception("RFC not reconized : " + request);
 				s.str(request);
 				getline(s, elem);
@@ -308,11 +331,11 @@ namespace network
 		 * simple message to leave a game
 		 * It remove the game socket to
 		 */
-		void leave()
+		void leave(std::string &gameName)
 		{
-			std::string base("LEAVE");
+			std::string base("LEAVE ") ;
 
-			sendRequest(m_gameId, base);
+			sendRequest(m_serverId, base + gameName);
 //			m_socket.removeSocket(m_gameId);
 			m_gameId = -1;
 		}
@@ -349,6 +372,11 @@ namespace network
 			auto vec = m_remove;
 			m_remove.clear();
 			return vec;
+		}
+
+		const std::vector<network::GameScore> &getGameScore() const
+		{
+			return m_gameScore;
 		}
 
 	private:
@@ -413,6 +441,7 @@ namespace network
 		std::vector<EntityPos> m_entityPos;
 		std::vector<EntityInfo> m_entityInit;
 
+		std::vector<network::GameScore> m_gameScore;
 		std::vector<size_t> m_deadRat;
 		std::vector<size_t> m_remove;
 

@@ -10,7 +10,7 @@
  * init all attributes
  */
 rtype::Server::Server() :
-        m_socket(50000),
+        m_socket(50003),
         m_rfcManager(m_socket),
         m_working(true)
 {
@@ -101,10 +101,29 @@ void rtype::Server::createGame(network::requestInfo &request)
         m_gamesInfo.emplace(matches[1].str(), gameInfo(socket));
     if (pswd)
         m_gamesInfo.emplace(matches[1].str(), gameInfo(socket, matches[2].str()));
+
+    m_gamesInfo[matches[1].str()].nbPlayer++;
     m_games.emplace(matches[1].str(), std::thread(&Game::GameEngine::run, m_gamesInfo[matches[1].str()].game.get()));
     m_gameName.push_back(matches[1].str());
 
     m_rfcManager.reponseGameIp(m_gamesInfo[matches[1].str()].ip, m_gamesInfo[matches[1].str()].port, request.sender);
+}
+
+void rtype::Server::leaveGame(network::requestInfo &req)
+{
+    std::string sub = req.data.substr(6);
+    sub.pop_back();
+    sub.pop_back();
+	std::cout << "player leave: " << sub << std::endl;
+    m_gamesInfo[sub].nbPlayer--;
+    if (m_gamesInfo[sub].nbPlayer == 0) {
+        m_gamesInfo[sub].game->stopGame();
+        m_games[sub].join();
+
+        m_gamesInfo.erase(sub);
+        m_games.erase(sub);
+        m_gameName.erase(std::find(m_gameName.begin(), m_gameName.end(), sub));
+    }
 }
 
 /**
@@ -117,8 +136,10 @@ void rtype::Server::run()
 
     m_socket.startAccept();
     while (m_working) {
-        if (m_socket.requestIsEmpty())
+        if (m_socket.requestIsEmpty()) {
+            usleep(1000);
             continue;
+        }
 
         request = m_rfcManager.getLastRequest();
         if (request.data.empty())
@@ -130,7 +151,9 @@ void rtype::Server::run()
                 joinGame(request);
             else if (!request.data.compare(0, 7, "CREATE "))
                 createGame(request);
-            else {
+            else if (!request.data.compare(0, 6, "LEAVE ")){
+                leaveGame(request);
+            } else {
                 throw RfcException(request.data + ": RFC not recognise");
             }
         } catch (rtype::RfcException &e) {

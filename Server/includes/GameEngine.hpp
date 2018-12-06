@@ -38,7 +38,6 @@ namespace Game {
 
         void manageRequest();
 
-        void receive(const DrawEvent &event);
         void receive(const RemoveEvent &event);
 
     private:

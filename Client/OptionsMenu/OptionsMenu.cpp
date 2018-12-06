@@ -8,13 +8,6 @@
 
 void OptionsMenu::setButtons()
 {
-
-	std::cout << "Getting window" << std::endl;
-	auto windowSize = _manager.getWindow()->getSize();
-	std::cout << "Got window\n";
-	auto windowHeight = static_cast<float> (windowSize.x);
-	auto windowWidth = static_cast<float> (windowSize.y);
-
 	this->_buttons.insert(std::make_pair<std::string, std::shared_ptr<Button>>("VolumePlus", std::make_shared<Button>(MenuButton(this->_manager.getWindow(), "button1", "VolumePlus", [](){}, [](){}, [](){}))));
 
 	auto volumePlusButton = getButtonByName("VolumePlus");

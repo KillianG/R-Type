@@ -18,11 +18,12 @@ namespace Game {
      * Defines the shooter
      */
     struct ShootEvent : public BaseEvent {
-        ShootEvent(ecs::Entity &id, Team &&team, int charge = 0) : _id(id), _team(team), _charge(charge) {}
+        ShootEvent(ecs::Entity id, Team team, int charge = 0, Game::vector2f &&dir = {0, 0}) : _id(id), _team(team), _charge(charge), _dir(dir) {}
 
         ecs::Entity _id;
         Team _team;
         int _charge;
+        Game::vector2f _dir;
     };
 
     /**
@@ -59,10 +60,11 @@ namespace Game {
         bool _death;
     };
 
-    /**
-     * Defines entities to draw
-     */
-    struct DrawEvent : public BaseEvent {
-        std::vector<network::EntityPos> _entities;
+    struct CollideEvent : public BaseEvent {
+        CollideEvent(const ecs::Entity &id, const ecs::Entity &other, int charge) : _id(id), _other(other), _charge(charge) {}
+
+        ecs::Entity _id;
+        ecs::Entity _other;
+        int _charge;
     };
 }

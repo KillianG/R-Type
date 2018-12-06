@@ -27,8 +27,10 @@ namespace gfx {
         void setPlayingOffsetMusic(std::string name, float seconds);
         void setLoopMusic(std::string name, bool loop);
         void setVolumeMusic(std::string name, float volume);
+        void setVolume(float vol);
 
     private:
+        float volume { 50 };
         std::map<std::string, std::shared_ptr<sf::Music>> musics;
     };
 }
