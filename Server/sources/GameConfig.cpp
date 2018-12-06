@@ -13,8 +13,8 @@
 #include "Utils.hpp"
 
 namespace Config {
-	uint32_t width;
-	uint32_t height;
+	int width;
+	int height;
 	float speed;
 	float missileSpeed;
 
@@ -33,27 +33,35 @@ namespace Config {
 		width  = { 1280 };
 		height = { 720 };
 		speed = { 300 };
-		missileSpeed = { 450 };
+		missileSpeed = { 650 };
 
 		_60fps = { std::chrono::nanoseconds(16666666) };
 		_120fps = { std::chrono::nanoseconds(8333333) };
 
 		playerHitBox = { 66, 34 };
-
 		missileHitBoxes = { {{ 17, 12 }, { 33, 12 }, { 49, 14 }, { 65, 14 }, { 81, 16 }}};
 
 		allEntityInit = {
-		{0, "background", 0 ,0}, /* Background */
-        {1, "player1", 66, 34}, /* Player */
-        {2, "player2", 66, 34}, /* Player */
-        {3, "player3", 66, 34}, /* Player */
-        {4, "player4", 66, 34}, /* Player */
+				{0, "bg_dullstars", 1280, 720}, /* Backgrounds bg_darknebula */
+				{1, "player1", 66, 34}, /* Player */
+				{2, "player2", 66, 34}, /* Player */
+				{3, "player3", 66, 34}, /* Player */
+				{4, "player4", 66, 34}, /* Player */
 
-        {5, "missile1_17x12", 17, 12}, /* Missile */
-        {6, "missile2_33x12", 33, 12}, /* Missile */
-        {7, "missile3_49x14", 49, 14}, /* Missile */
-        {8, "missile4_65x14", 65, 14}, /* Missile */
-        {9, "missile5_81x16", 81, 16}, /* Missile */
+				{5, "missile1", 34, 24}, /* Missile */
+				{6, "missile2", 66, 26}, /* Missile */
+				{7, "missile3", 98, 28}, /* Missile */
+				{8, "missile4", 130, 28}, /* Missile */
+				{9, "missile5", 162, 32}, /* Missile */
+				{10, "ennemyMissile0_17x14", 34, 28}, /* Missile */
+
+                {11, "planet_sun1", 1000, 1000}, /* Backgrounds */
+                {12, "planet_populated_brown", 512, 512}, /* Backgrounds */
+                {13, "StarField", 544, 320}, /* Backgrounds */
+
+				{14, "bonus1", 34, 36}, /* SpeedUp */
+				{15, "bonus2", 34, 36}, /* Shield bonus */
+				{16, "Shield", 80, 50} /* Shield */
 		};
 
 		auto &loader = gfx::Singleton<game::DynamicLoaderManager>::get();

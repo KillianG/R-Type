@@ -18,12 +18,10 @@ TEST_CASE("SERVER PARSING LEVEL", "[SERVER]")
 		REQUIRE_THROWS_AS(parsing.getMonster(0), rtype::Exception);
 
 		parsing.startGame();
-		usleep(1000);
-		std::vector<Game::MonsterInfo> monsterList = parsing.getMonster(1000);
-		usleep(1000);
-		usleep(1000);
-		usleep(1000);
-		monsterList = parsing.getMonster(3000);
-		monsterList = parsing.getMonster(3000);
+		usleep(1);
+		std::vector<Game::MonsterInfo> monsterList = parsing.getMonster(1);
+		usleep(1);
+		monsterList = parsing.getMonster(3);
+		monsterList = parsing.getMonster(3);
 	}
 }

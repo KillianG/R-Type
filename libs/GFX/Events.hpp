@@ -51,6 +51,7 @@ namespace gfx {
     class InputEvent : public BaseEvent {
     public:
         InputEvent(std::string input);
+        InputEvent();
         static std::string input;
         static std::string clear();
     };

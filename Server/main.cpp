@@ -5,12 +5,18 @@
 ** Made on 2018/11 by ebernard
 */
 
+#include "Logger.hpp"
 #include "includes/Server.hpp"
 
-int main(int argc[[maybe_unused]], char **argv[[maybe_unused]])
+int main(int argc, char **argv)
 {
-        rtype::Server server;
+	try {
+		rtype::Server server;
 
-        server.run();
-        return 0;
+		server.run();
+	} catch (std::exception &e) {
+		Logger::log(Logger::LogType::error, e.what());
+		return 84;
+	}
+	return 0;
 }

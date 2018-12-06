@@ -9,8 +9,8 @@
 #include "../../libs/Network/networkUtils.hpp"
 
 namespace Config {
-	extern uint32_t width;
-	extern uint32_t height;
+	extern int width;
+	extern int height;
 	extern float speed;
 	extern float missileSpeed;
 

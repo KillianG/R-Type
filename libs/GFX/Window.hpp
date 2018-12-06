@@ -37,6 +37,7 @@ namespace gfx {
         void clearWindow();
         void setVisible(bool visible);
         void addSprite(std::string path, std::string name);
+        std::vector<std::shared_ptr<gfx::Sprite>> getSprites() const;
         void run();
         std::shared_ptr<gfx::Sprite> getSpriteByName(std::string name);
         gfx::Vector2Int getSize();

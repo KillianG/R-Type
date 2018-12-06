@@ -26,6 +26,7 @@ TEST_CASE("Logger") {
         const std::string secondLog = "I see dead people";
         const std::string thirdLog = "May the force be with you";
 
+#ifdef __unix__
         Logger::log(Logger::LogType::warn, firstLog);
         REQUIRE(getLastMsg(Logger::getLogs()) == firstLog);
 
@@ -34,6 +35,7 @@ TEST_CASE("Logger") {
 
         Logger::log(Logger::LogType::debug, thirdLog);
         REQUIRE(getLastMsg(Logger::getLogs()) == thirdLog);
+#endif
     }
     SECTION("CLOSE") {
         Logger::close();

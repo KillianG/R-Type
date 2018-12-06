@@ -130,7 +130,7 @@ std::shared_ptr<gfx::Mouse> gfx::Manager::getMouse() const {
  * getter for soundmanager
  * @return sound manager
  */
-const gfx::SoundManager &gfx::Manager::getSoundManager() const {
+gfx::SoundManager &gfx::Manager::getSoundManager() {
     return this->soundManager;
 }
 

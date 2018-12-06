@@ -52,7 +52,7 @@ class Manager : public gfx::Singleton<gfx::Manager> {
         const std::stack<std::shared_ptr<gfx::Window>> &getWindows() const;
 
         const gfx::KeyboardManager &getKeyboardManager() const;
-        const gfx::SoundManager &getSoundManager() const;
+        gfx::SoundManager &getSoundManager();
 
         std::shared_ptr<gfx::Mouse> getMouse() const;
 

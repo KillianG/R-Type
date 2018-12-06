@@ -4,22 +4,28 @@
 
 #pragma once
 
-#include "IEnnemy.hpp"
+#include "AEnnemy.hpp"
 
-class FirstBoss : public IEnnemy {
+class FirstBoss : public AEnnemy {
 public:
-    FirstBoss() = default;
+    FirstBoss();
 
     MovableHitBox initEnnemy(const Game::vector2f &pos) noexcept override;
 
+    std::vector<Game::ShootEvent> shootMissiles() override;
 
-    const Game::vector2f &move(float) noexcept override;
+    std::vector<Game::MonsterInfo> spawnEnnemies() override;
+
+    const Game::vector2f &update(float) noexcept override;
 
 private:
-    bool _phase { true };
-    float _speedMonster {300};
+	float _time { 0 };
+	float _burstcoolDownTime { 2.5 };
+	static constexpr float _speedMonster { 240 };
+    static constexpr float _speedMissile { 500 };
 
-    Game::vector2f _pos;
-    Game::vector2f _dir { -_speedMonster, 0 };
+	Game::vector2f _pos;
+    Game::vector2f _angles { 120, 240 };
+	Game::vector2f _dir { -_speedMonster, _speedMonster };
 };
 

@@ -4,28 +4,45 @@
 
 #include "FirsBoss.hpp"
 
-
 extern "C" {
     IEnnemy::Ptr getMonsterLibrary() { return std::make_unique<FirstBoss>(); }
-    std::string getName() {return "FirstBoss";}
-    network::EntityInfo getInit() { return network::EntityInfo(EnnemyConfig::BIRD2, EnnemyConfig::EnnemySprite.at(EnnemyConfig::BIRD2), EnnemyConfig::EnnemyHitboxes.at(EnnemyConfig::BIRD2));}
+    std::string getName() { return "FirstBoss"; }
 };
 
-const Game::vector2f &FirstBoss::move(float timeSinceLastFrame) noexcept {
-    if (_phase) {
-        _pos.translate(_dir.x * timeSinceLastFrame, -_speedMonster * timeSinceLastFrame);
-        if (_pos.y <  50)
-            _phase = false;
-    } else {
-        _pos.translate(_dir.x * timeSinceLastFrame, _speedMonster * timeSinceLastFrame);
-        if (_pos.y >  720 - 30)
-            _phase = true;
-    }
-    return _pos;
+FirstBoss::FirstBoss() : AEnnemy(EnnemyConfig::FIRSTBOSS, 100) {}
+
+MovableHitBox FirstBoss::initEnnemy(const Game::vector2f &pos) noexcept {
+    _pos = pos;
+    return AEnnemy::init(pos);
 }
 
-MovableHitBox FirstBoss::initEnnemy(const Game::vector2f &pos) noexcept
-{
-    _pos = pos;
-    return { EnnemyConfig::EnnemyHitboxes.at(EnnemyConfig::BIRD), pos, EnnemyConfig::BIRD, EnnemyConfig::EnnemyAnimSize.at(EnnemyConfig::BIRD) };
+std::vector<Game::ShootEvent> FirstBoss::shootMissiles() {
+    std::vector<Game::ShootEvent> shoot{};
+
+    for (auto i = _angles.x; i < _angles.y;) {
+        shoot.emplace_back(0, Game::Team::ennemy, 0, Game::vector2f::DegreeToVec(i, _speedMissile));
+        i += 13;
+    }
+    _isShooting = false;
+    return shoot;
+}
+
+std::vector<Game::MonsterInfo> FirstBoss::spawnEnnemies() {
+    return { std::vector<Game::MonsterInfo>() };
+}
+
+const Game::vector2f &FirstBoss::update(float timeSinceLastFrame) noexcept {
+    if (_pos.x <= 600 || _pos.x >= 1280 - EnnemyConfig::EnnemyHitboxes.at(_spriteId).width) {
+        _dir.x = -_dir.x;
+    } else if (_pos.y <= 0 || _pos.y >= 720 - EnnemyConfig::EnnemyHitboxes.at(_spriteId).height)
+        _dir.y = -_dir.y;
+    _pos.translate(-_dir.x * timeSinceLastFrame, -_dir.y * timeSinceLastFrame);
+
+    if (!_isShooting)
+        _time += timeSinceLastFrame;
+    if (_time > _burstcoolDownTime && !_isShooting) {
+        _time = 0;
+        _isShooting = true;
+    }
+    return _pos;
 }

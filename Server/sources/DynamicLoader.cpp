@@ -7,6 +7,8 @@
 
 #include <dlfcn.h>
 #include <iostream>
+#include <Server/includes/DynamicLoader.hpp>
+
 #include "../includes/DynamicLoader.hpp"
 
 DynamicLoader::DynamicLoader(std::string const &dlname) {
@@ -18,7 +20,7 @@ DynamicLoader::DynamicLoader(std::string const &dlname) {
 		throw std::logic_error(dlerror());
 	}
 }
-
-DynamicLoader::~DynamicLoader() {
-//	dlclose(handle);
+void DynamicLoader::closeDl()
+{
+	dlclose(handle);
 }

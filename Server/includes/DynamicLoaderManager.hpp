@@ -18,6 +18,7 @@ namespace game
 	{
 	public:
 		DynamicLoaderManager();
+		~DynamicLoaderManager();
 
 		void loadLibs();
 		IEnnemy::Ptr getMonster(std::string &type);

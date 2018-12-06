@@ -80,7 +80,7 @@ namespace network
 		 * EntityPos serializer for RFC
 		 * @param entities list of entityPos to serialize
 		 */
-		void entitiesPos(const std::vector<EntityPos> &entities)
+		void entitiesPos(std::vector<EntityPos> &&entities)
 		{
 			std::string req("GAME UPDATE\n");
 
@@ -199,6 +199,19 @@ namespace network
 			std::string d("DEADRAT: ");
 			std::string req(d + std::to_string(id));
 
+			for (auto &&elem : m_client) {
+				sendRequest(req, elem.first);
+			}
+		}
+
+		void sendGameScore(std::vector<GameScore> &score)
+		{
+			std::string req("SCORE:\n");
+
+			for (auto &&elem : score)
+				req += "id: " + std::to_string(elem.id) + " score:" + std::to_string(elem.score) + '\n';
+
+			req.pop_back();
 			for (auto &&elem : m_client) {
 				sendRequest(req, elem.first);
 			}

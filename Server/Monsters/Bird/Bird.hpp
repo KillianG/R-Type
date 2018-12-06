@@ -4,21 +4,25 @@
 
 #pragma once
 
-#include "IEnnemy.hpp"
+#include "AEnnemy.hpp"
 
-class Bird : public IEnnemy {
+class Bird : public AEnnemy {
 public:
-    Bird() = default;
+    Bird();
 
     MovableHitBox initEnnemy(const Game::vector2f &pos) noexcept override;
 
-    const Game::vector2f &move(float) noexcept override;
+    std::vector<Game::ShootEvent> shootMissiles() override;
+
+    virtual std::vector<Game::MonsterInfo> spawnEnnemies() override;
+
+    const Game::vector2f &update(float) noexcept override;
 
 private:
     bool _phase { true };
     float _speedMonster { 300 };
 
     Game::vector2f _pos;
-    Game::vector2f _dir { -_speedMonster, 0 };
+    Game::vector2f _dir { _speedMonster, _speedMonster };
     float _basePosY { 0 };
 };

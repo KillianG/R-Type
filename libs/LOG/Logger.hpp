@@ -17,10 +17,14 @@ public:
 
     enum class LogType {info, debug, warn, error};
     static void log(LogType type, const std::string &msg);
+#ifdef __unix__
     static std::string getLogs();
+#endif
     static void close();
 private:
+#ifdef __unix__
     static std::_Put_time<char> getTime();
+#endif
     static std::string getType(LogType type);
     static std::fstream myFile;
     static const std::map<LogType, const std::string> logTypeMap;

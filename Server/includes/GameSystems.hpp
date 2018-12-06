@@ -10,3 +10,4 @@
 #include "Systems/ShootSystem.hpp"
 #include "Systems/DrawSystem.hpp"
 #include "Systems/EnnemySystem.hpp"
+#include "Systems/BonusSystem.hpp"

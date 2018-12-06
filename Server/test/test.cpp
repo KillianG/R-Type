@@ -29,10 +29,10 @@ TEST_CASE("SERVER CONNECTION", "[SERVER]")
 		std::thread t(&rtype::Server::run, &serv);
 		std::vector<std::string> servList;
 
-		REQUIRE(rfcClient1.ConnectServer(ip, 50000, login1).empty());
+		REQUIRE(rfcClient1.ConnectServer(ip, 50003, login1).empty());
 		REQUIRE_NOTHROW(rfcClient1.createGame(gameName));
 
-		REQUIRE_NOTHROW(servList = rfcClient2.ConnectServer(ip, 50000, login2));
+		REQUIRE_NOTHROW(servList = rfcClient2.ConnectServer(ip, 50003, login2));
 		REQUIRE(servList.size() == 1);
 		REQUIRE(servList[0] == gameName);
 		REQUIRE_NOTHROW(rfcClient2.joinGame(gameName));
@@ -47,10 +47,10 @@ TEST_CASE("SERVER CONNECTION", "[SERVER]")
 		std::thread t(&rtype::Server::run, &serv);
 		std::vector<std::string> servList;
 
-		REQUIRE(rfcClient1.ConnectServer(ip, 50000, login1).empty());
+		REQUIRE(rfcClient1.ConnectServer(ip, 50003, login1).empty());
 		REQUIRE_NOTHROW(rfcClient1.createGame(gameName, password));
 
-		REQUIRE_NOTHROW(servList = rfcClient2.ConnectServer(ip, 50000, login2));
+		REQUIRE_NOTHROW(servList = rfcClient2.ConnectServer(ip, 50003, login2));
 		REQUIRE(servList.size() == 1);
 		REQUIRE(servList[0] == gameName);
 		REQUIRE_NOTHROW(rfcClient2.joinGame(gameName, password));

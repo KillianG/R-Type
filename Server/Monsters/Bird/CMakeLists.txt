@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.4)
 
 project(_bird)
 
-add_library(${PROJECT_NAME} SHARED Bird.cpp)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/Monsters)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/Monsters)
+add_library(${PROJECT_NAME} SHARED Bird.cpp)
+add_library(${PROJECT_NAME}2 SHARED Bird2.cpp)
+add_library(${PROJECT_NAME}3 SHARED Bird3.cpp)

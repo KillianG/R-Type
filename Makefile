@@ -9,7 +9,7 @@ LIGHT_GREEN = "\033[1;32m"
 RESET = "\033[0m"
 
 all: build
-	@$(MAKE) -j4 -s -C build
+	@$(MAKE) -j2 -s -C build
 	@cd build && ctest
 	@rm -rf Testing
 

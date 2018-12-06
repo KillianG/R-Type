@@ -15,7 +15,7 @@ class DynamicLoader {
 public:
 	DynamicLoader() = default;
 	explicit DynamicLoader(std::string const &dlname);
-	~DynamicLoader();
+	void closeDl();
 
 	template<typename Ret, typename ... Params>
 	Ret call(std::string const &functionName, const Params& ... par) const {

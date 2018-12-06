@@ -30,7 +30,7 @@ namespace ecs
 		const std::vector<std::set<ComponentType>> &getNeededComponents() const;
 
 		void addEntity(Entity);
-		void removeEntity(Entity);
+		size_t removeEntity(Entity);
 		bool hasEntity(Entity) const;
 	protected:
 		const std::set<Entity> &getEntities() const;
